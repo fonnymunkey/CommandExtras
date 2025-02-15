@@ -25,23 +25,40 @@ public class CommandChainCommand extends CommandBase {
 	
 	@Override
 	public String getUsage(ICommandSender sender) {
-		return "/commandchain <entity> <x> <y> <z> <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)";
+		return "/commandchain <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)" + "\n" +
+				"/commandchain <entity> <x> <y> <z> <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)";
 	}
 	
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		if(args.length < 5) {
-			throw new WrongUsageException("/commandchain <entity> <x> <y> <z> <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)");
+		if(args.length < 1) {
+			throw new WrongUsageException("/commandchain <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)" + "\n" +
+												  "/commandchain <entity> <x> <y> <z> <command1> &&0 <command2> &&0 ... (&&1 &&2 etc for nested chains)");
 		}
 		else {
-			Entity entity = getEntity(server, sender, args[0], Entity.class);
-			double d0 = parseDouble(entity.posX, args[1], false);
-			double d1 = parseDouble(entity.posY, args[2], false);
-			double d2 = parseDouble(entity.posZ, args[3], false);
+			Entity entity = null;
+			Double d0 = null;
+			Double d1 = null;
+			Double d2 = null;
+			try {
+				entity = getEntity(server, sender, args[0], Entity.class);
+				d0 = parseDouble(entity.posX, args[1], false);
+				d1 = parseDouble(entity.posY, args[2], false);
+				d2 = parseDouble(entity.posZ, args[3], false);
+			}
+			catch(Exception ignored) {}
 			
-			ICommandSender icommandsender = CommandSenderWrapper.create(sender).withEntity(entity, new Vec3d(d0, d1, d2)).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+			ICommandSender icommandsender;
+			List<String> commands;
+			if(entity != null && d0 != null && d1 != null && d2 != null) {
+				icommandsender = CommandSenderWrapper.create(sender).withEntity(entity, new Vec3d(d0, d1, d2)).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+				commands = parseCommands(buildString(args, 4));
+			}
+			else {
+				icommandsender = CommandSenderWrapper.create(sender).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+				commands = parseCommands(buildString(args, 0));
+			}
 			
-			List<String> commands = parseCommands(buildString(args, 4));
 			for(String command : commands) {
 				command = command.trim();
 				if(command.isEmpty()) continue;

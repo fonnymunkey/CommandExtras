@@ -25,23 +25,40 @@ public class CommandDelayCommand extends CommandBase {
 	
 	@Override
 	public String getUsage(ICommandSender sender) {
-		return "/commanddelay <ticks> <entity> <x> <y> <z> <command>";
+		return "/commanddelay <ticks> <command>" + "\n" +
+				"/commanddelay <ticks> <entity> <x> <y> <z> <command>";
 	}
 	
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-		if(args.length < 6) {
-			throw new WrongUsageException("/commanddelay <ticks> <entity> <x> <y> <z> <command>");
+		if(args.length < 2) {
+			throw new WrongUsageException("/commanddelay <ticks> <command>" + "\n" +
+							"/commanddelay <ticks> <entity> <x> <y> <z> <command>");
 		}
 		else {
 			int time = parseInt(args[0]);
-			Entity entity = getEntity(server, sender, args[1], Entity.class);
-			double d0 = parseDouble(entity.posX, args[2], false);
-			double d1 = parseDouble(entity.posY, args[3], false);
-			double d2 = parseDouble(entity.posZ, args[4], false);
+			Entity entity = null;
+			Double d0 = null;
+			Double d1 = null;
+			Double d2 = null;
+			try {
+				entity = getEntity(server, sender, args[1], Entity.class);
+				d0 = parseDouble(entity.posX, args[2], false);
+				d1 = parseDouble(entity.posY, args[3], false);
+				d2 = parseDouble(entity.posZ, args[4], false);
+			}
+			catch(Exception ignored) {}
 			
-			String s = buildString(args, 5);
-			ICommandSender icommandsender = CommandSenderWrapper.create(sender).withEntity(entity, new Vec3d(d0, d1, d2)).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+			String s;
+			ICommandSender icommandsender;
+			if(entity != null && d0 != null && d1 != null && d2 != null) {
+				s = buildString(args, 5);
+				icommandsender = CommandSenderWrapper.create(sender).withEntity(entity, new Vec3d(d0, d1, d2)).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+			}
+			else {
+				s = buildString(args, 1);
+				icommandsender = CommandSenderWrapper.create(sender).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
+			}
 			
 			if(time > 0) {
 				if(!s.isEmpty()) {
